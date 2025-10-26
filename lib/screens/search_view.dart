@@ -1,97 +1,89 @@
-// import 'package:flutter/material.dart';
-// import 'package:get/get.dart';
-// import 'package:matrimonial/api_routes.dart';
-// import 'package:matrimonial/controllers/authController.dart';
-// import 'package:matrimonial/controllers/searchController.dart' as my;
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import '../controllers/searchController.dart';
 
-// class SearchView extends StatelessWidget {
-//   const SearchView({super.key});
+class SearchScreen extends StatelessWidget {
+  const SearchScreen({super.key});
 
-//   @override
-//   Widget build(BuildContext context) {
-//     final my.SearchController searchC = Get.find();
-//     final AuthController authC = Get.find();
+  @override
+  Widget build(BuildContext context) {
+    final controller = Get.put(SearchUserController());
 
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: const Text('Search Results'),
-//         actions: [
-//           IconButton(
-//             icon: const Icon(Icons.logout),
-//             onPressed: () async {
-//               final persist = authC.saveCookie.value;
-//               await authC.logout(persist: persist);
-//               Get.offAllNamed(Routes.login);
-//             },
-//           ),
-//         ],
-//       ),
-//       body: Column(
-//         children: [
-//           Padding(
-//             padding: const EdgeInsets.all(12.0),
-//             child: Row(
-//               children: [
-//                 ElevatedButton(
-//                   onPressed: () => searchC.fetchResults(
-//                     searchResultType: 1,
-//                     searchValue: '1',
-//                   ),
-//                   child: const Text('Refresh'),
-//                 ),
-//                 const SizedBox(width: 12),
-//                 Obx(
-//                   () => searchC.isLoading.value
-//                       ? const CircularProgressIndicator()
-//                       : const SizedBox.shrink(),
-//                 ),
-//               ],
-//             ),
-//           ),
-//           Expanded(
-//             child: Obx(() {
-//               if (searchC.error.value.isNotEmpty) {
-//                 return Center(
-//                   child: Text(
-//                     searchC.error.value,
-//                     style: const TextStyle(color: Colors.red),
-//                   ),
-//                 );
-//               }
-//               if (searchC.isLoading.value && searchC.results.isEmpty) {
-//                 return const Center(child: CircularProgressIndicator());
-//               }
-//               if (searchC.results.isEmpty) {
-//                 return const Center(child: Text('No results'));
-//               }
-//               return ListView.separated(
-//                 padding: const EdgeInsets.all(12),
-//                 itemCount: searchC.results.length,
-//                 separatorBuilder: (_, __) => const Divider(),
-//                 itemBuilder: (context, idx) {
-//                   final item = searchC.results[idx];
-//                   String title = '';
-//                   if (item is Map) {
-//                     title =
-//                         item['FullName']?.toString() ??
-//                         item['name']?.toString() ??
-//                         item['ProfileId']?.toString() ??
-//                         item.toString();
-//                   } else {
-//                     title = item.toString();
-//                   }
-//                   return ListTile(
-//                     title: Text(title),
-//                     subtitle: Text(
-//                       item is Map ? item.toString() : item.toString(),
-//                     ),
-//                   );
-//                 },
-//               );
-//             }),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }
+
+    controller.fetchSearchResults(searchResultType: 2, searchValue: "1");
+    controller.fetchSearchResults(searchResultType: 2, searchValue: "4");
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Search Results'),
+        centerTitle: true,
+      ),
+      body: Obx(() {
+        if (controller.isLoading.value) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (controller.errorMessage.isNotEmpty) {
+          return Center(child: Text(controller.errorMessage.value));
+        }
+
+        final results = controller.results;
+
+        if (results.isEmpty) {
+          return const Center(child: Text('No profiles found.'));
+        }
+
+        return ListView.builder(
+          itemCount: results.length,
+          padding: const EdgeInsets.all(10),
+          itemBuilder: (context, index) {
+            final item = results[index];
+
+            return Card(
+              margin: const EdgeInsets.symmetric(vertical: 8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              elevation: 3,
+              child: ListTile(
+                contentPadding: const EdgeInsets.all(12),
+                leading: CircleAvatar(
+                  backgroundImage: NetworkImage(item['DefaultPhoto'] ??
+                      'https://cdn.rdgroup.in/t/img/user/Female.gif'),
+                  radius: 28,
+                ),
+                title: Text(
+                  item['Name'] ?? 'Unknown',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Age: ${item['Age'] ?? '-'}'),
+                    Text('Gotra: ${item['Gotra'] ?? '-'}'),
+                    Text('Education: ${item['Education'] ?? '-'}'),
+                    Text('Income: ${item['IncomeCategory'] ?? '-'}'),
+                  ],
+                ),
+                trailing: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text('ID: ${item['ProfileId']}',
+                        style: const TextStyle(fontSize: 12)),
+                    const SizedBox(height: 4),
+                    Text(item['LastActive'] ?? '',
+                        style: const TextStyle(fontSize: 12)),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      }),
+    );
+  }
+}
