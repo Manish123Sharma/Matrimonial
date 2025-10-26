@@ -1,27 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:matrimonial/api_routes.dart';
-import 'package:matrimonial/screens/login_screen.dart';
-import 'package:matrimonial/screens/search_view.dart';
+import 'screens/login_screen.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+void main() {
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
-      title: 'Maheshwari Matrimonial (Test)',
-      theme: ThemeData(useMaterial3: true, colorSchemeSeed: Colors.deepPurple),
-      initialRoute: Routes.login,
       debugShowCheckedModeBanner: false,
-      getPages: [
-        GetPage(name: Routes.login, page: () => const LoginView()),
-        GetPage(name: Routes.search, page: () => const SearchView()),
-      ],
+      title: 'Maheshwari Matrimonial',
+      theme: ThemeData(primarySwatch: Colors.red),
+      home: LoginScreen(),
     );
   }
 }
