@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:matrimonial/screens/login_screen.dart';
 import '../controllers/searchController.dart';
+import '../services/api_service.dart';
+import '../controllers/authController.dart';
 
 class SearchScreen extends StatelessWidget {
   const SearchScreen({super.key});
@@ -8,8 +11,10 @@ class SearchScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(SearchUserController());
+    final apiService = Get.find<ApiService>();
+    final authController = Get.find<AuthController>();
 
-
+    // Fetch results (example static values)
     controller.fetchSearchResults(searchResultType: 2, searchValue: "1");
     controller.fetchSearchResults(searchResultType: 2, searchValue: "4");
 
@@ -17,6 +22,37 @@ class SearchScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Search Results'),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () async {
+              final confirm = await Get.defaultDialog<bool>(
+                title: "Logout",
+                middleText: "Are you sure you want to logout?",
+                textCancel: "Cancel",
+                textConfirm: "Logout",
+                confirmTextColor: Colors.white,
+                onConfirm: () {
+                  Get.back(result: true);
+                },
+                onCancel: () => Get.back(result: false),
+              );
+
+              if (confirm == true) {
+                // Clear cookies
+                final apiService = Get.find<ApiService>();
+                await apiService.clearCookies(persist: false);
+
+                // Clear login fields
+                final authController = Get.find<AuthController>();
+                authController.clearFields();
+
+                // Navigate to login screen
+                Get.offAll(() => const LoginScreen());
+              }
+            },
+          ),
+        ],
       ),
       body: Obx(() {
         if (controller.isLoading.value) {
@@ -48,8 +84,10 @@ class SearchScreen extends StatelessWidget {
               child: ListTile(
                 contentPadding: const EdgeInsets.all(12),
                 leading: CircleAvatar(
-                  backgroundImage: NetworkImage(item['DefaultPhoto'] ??
-                      'https://cdn.rdgroup.in/t/img/user/Female.gif'),
+                  backgroundImage: NetworkImage(
+                    item['DefaultPhoto'] ??
+                        'https://cdn.rdgroup.in/t/img/user/Female.gif',
+                  ),
                   radius: 28,
                 ),
                 title: Text(
@@ -72,11 +110,15 @@ class SearchScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text('ID: ${item['ProfileId']}',
-                        style: const TextStyle(fontSize: 12)),
+                    Text(
+                      'ID: ${item['ProfileId']}',
+                      style: const TextStyle(fontSize: 12),
+                    ),
                     const SizedBox(height: 4),
-                    Text(item['LastActive'] ?? '',
-                        style: const TextStyle(fontSize: 12)),
+                    Text(
+                      item['LastActive'] ?? '',
+                      style: const TextStyle(fontSize: 12),
+                    ),
                   ],
                 ),
               ),
