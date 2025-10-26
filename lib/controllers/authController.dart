@@ -5,7 +5,9 @@ import 'package:dio/dio.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../screens/home_screen.dart'; // <-- Import your HomeScreen here
+import 'package:matrimonial/controllers/searchController.dart';
+import 'package:matrimonial/screens/search_view.dart';
+import 'package:matrimonial/services/api_service.dart';
 
 class AuthController extends GetxController {
   final profileIdController = TextEditingController();
@@ -72,8 +74,9 @@ class AuthController extends GetxController {
       final relation = selectedRelation.value;
       final saveCookie = rememberMe.value.toString();
 
-      final token =
-          base64Encode(utf8.encode('$profileId:$password:$relation:$saveCookie'));
+      final token = base64Encode(
+        utf8.encode('$profileId:$password:$relation:$saveCookie'),
+      );
       final headers = {'Authorization': 'Basic $token'};
 
       final response = await dio.get(
@@ -84,24 +87,31 @@ class AuthController extends GetxController {
       final data = response.data;
 
       if (data != null && data['Authenticated'] == true) {
-        // Save cookies received from API
+        // Save cookies
         final cookies = response.headers.map['set-cookie'];
         if (cookies != null) {
           final uri = Uri.parse('https://test.maheshwari.org');
-          final cookieList = cookies.map((c) => Cookie.fromSetCookieValue(c)).toList();
+          final cookieList = cookies
+              .map((c) => Cookie.fromSetCookieValue(c))
+              .toList();
           await cookieJar.saveFromResponse(uri, cookieList);
         }
 
+        // Initialize ApiService with same cookies
+        final apiService = Get.put(ApiService());
+        await apiService.init(persistCookies: rememberMe.value);
+
         showSuccess("Login Successful! Welcome to Maheshwari Matrimonial.");
 
-        // Navigate to HomeScreen and remove login from stack
-        Get.offAll(() => const HomeScreen());
+        // Navigate to search results screen
+        Get.offAll(() => const SearchScreen());
       } else {
         final message = data?['Message'] ?? 'Invalid credentials.';
         showError(message);
       }
     } on DioException catch (e) {
-      final msg = e.response?.data['Message'] ??
+      final msg =
+          e.response?.data['Message'] ??
           'Something went wrong. Please try again.';
       showError(msg);
     } catch (e) {
