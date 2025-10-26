@@ -1,53 +1,113 @@
-import 'package:get/get.dart';
+import 'dart:convert';
+import 'dart:io';
+import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio/dio.dart';
-import '../services/api_service.dart';
+import 'package:dio_cookie_manager/dio_cookie_manager.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import '../screens/home_screen.dart'; // <-- Import your HomeScreen here
 
 class AuthController extends GetxController {
-  final ApiService apiService = ApiService();
+  final profileIdController = TextEditingController();
+  final passwordController = TextEditingController();
 
+  var selectedRelation = ''.obs;
+  var rememberMe = false.obs;
   var isLoading = false.obs;
-  var errorMessage = ''.obs;
-  var saveCookie = true.obs;
 
-  /// login: returns true on success
-  Future<bool> login({
-    required String profileId,
-    required String password,
-    required int relation,
-    required bool saveCookieFlag,
-  }) async {
-    isLoading.value = true;
-    errorMessage.value = '';
-    try {
-      final resp = await apiService.login(
-        profileId: profileId,
-        password: password,
-        relation: relation,
-        saveCookie: saveCookieFlag,
-      );
-      // successful HTTP status
-      if (resp.statusCode != null && resp.statusCode! >= 200 && resp.statusCode! < 300) {
-        isLoading.value = false;
-        return true;
-      } else {
-        errorMessage.value = 'Login failed. Server returned ${resp.statusCode}';
-        isLoading.value = false;
-        return false;
-      }
-    } on DioError catch (e) {
-      final m = e.response?.data ?? e.message;
-      errorMessage.value = 'Login failed: $m';
-      isLoading.value = false;
-      return false;
-    } catch (e) {
-      errorMessage.value = 'Unexpected error: $e';
-      isLoading.value = false;
-      return false;
-    }
+  final Dio dio = Dio();
+  final cookieJar = CookieJar();
+
+  @override
+  void onInit() {
+    dio.interceptors.add(CookieManager(cookieJar));
+    super.onInit();
   }
 
-  /// clear cookies and reset
-  Future<void> logout({required bool persist}) async {
-    await apiService.clearCookies(persist: persist);
+  bool validateFields() {
+    if (profileIdController.text.trim().isEmpty) {
+      showError("Please enter Profile ID");
+      return false;
+    }
+    if (passwordController.text.trim().isEmpty) {
+      showError("Please enter Password");
+      return false;
+    }
+    if (selectedRelation.value.isEmpty) {
+      showError("Please select Relation");
+      return false;
+    }
+    return true;
+  }
+
+  void showError(String message) {
+    Get.snackbar(
+      'Error',
+      message,
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.red.shade700,
+      colorText: Colors.white,
+    );
+  }
+
+  void showSuccess(String message) {
+    Get.snackbar(
+      'Success',
+      message,
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.green,
+      colorText: Colors.white,
+    );
+  }
+
+  Future<void> loginUser() async {
+    if (!validateFields()) return;
+
+    isLoading.value = true;
+
+    try {
+      const apiUrl = 'https://test.maheshwari.org/api/user/authenticate';
+      final profileId = profileIdController.text.trim();
+      final password = passwordController.text.trim();
+      final relation = selectedRelation.value;
+      final saveCookie = rememberMe.value.toString();
+
+      final token =
+          base64Encode(utf8.encode('$profileId:$password:$relation:$saveCookie'));
+      final headers = {'Authorization': 'Basic $token'};
+
+      final response = await dio.get(
+        apiUrl,
+        options: Options(headers: headers),
+      );
+
+      final data = response.data;
+
+      if (data != null && data['Authenticated'] == true) {
+        // Save cookies received from API
+        final cookies = response.headers.map['set-cookie'];
+        if (cookies != null) {
+          final uri = Uri.parse('https://test.maheshwari.org');
+          final cookieList = cookies.map((c) => Cookie.fromSetCookieValue(c)).toList();
+          await cookieJar.saveFromResponse(uri, cookieList);
+        }
+
+        showSuccess("Login Successful! Welcome to Maheshwari Matrimonial.");
+
+        // Navigate to HomeScreen and remove login from stack
+        Get.offAll(() => const HomeScreen());
+      } else {
+        final message = data?['Message'] ?? 'Invalid credentials.';
+        showError(message);
+      }
+    } on DioException catch (e) {
+      final msg = e.response?.data['Message'] ??
+          'Something went wrong. Please try again.';
+      showError(msg);
+    } catch (e) {
+      showError('Unexpected error: $e');
+    } finally {
+      isLoading.value = false;
+    }
   }
 }
