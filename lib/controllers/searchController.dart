@@ -1,35 +1,38 @@
 import 'package:get/get.dart';
-import 'package:dio/dio.dart' as dio;
 import '../services/api_service.dart';
 
-class SearchController extends GetxController {
-  final ApiService apiService;
-  SearchController({required this.apiService});
+class SearchUserController extends GetxController {
+  final ApiService apiService = Get.find<ApiService>();
 
-  var isLoading = false.obs;
-  var results = <dynamic>[].obs;
-  var error = ''.obs;
+  RxBool isLoading = false.obs;
+  RxString errorMessage = ''.obs;
+  RxList<dynamic> results = <dynamic>[].obs;
 
-  Future<void> fetchResults({
-    required int searchResultType,
-    required String searchValue,
-  }) async {
+  /// Fetches results and appends them (instead of overwriting)
+  Future<void> fetchSearchResults({required int searchResultType, required String searchValue}) async {
     try {
       isLoading.value = true;
-      error.value = '';
+      errorMessage.value = '';
 
-      final dio.Response resp = await apiService.search(
+      final response = await apiService.search(
         searchResultType: searchResultType,
         searchValue: searchValue,
       );
 
-      if (resp.statusCode == 200) {
-        results.value = resp.data is List ? resp.data : [resp.data];
+      if (response.statusCode == 200) {
+        final data = response.data;
+
+        if (data != null && data['Results'] != null) {
+          // Append results instead of replacing
+          results.addAll(data['Results']);
+        } else {
+          errorMessage.value = 'No results found.';
+        }
       } else {
-        error.value = 'Error ${resp.statusCode}: ${resp.statusMessage}';
+        errorMessage.value = 'Server error: ${response.statusCode}';
       }
     } catch (e) {
-      error.value = 'Failed: $e';
+      errorMessage.value = 'Error fetching results: $e';
     } finally {
       isLoading.value = false;
     }
