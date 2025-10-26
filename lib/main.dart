@@ -1,21 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:matrimonial/controllers/authController.dart';
+import 'package:matrimonial/screens/search_view.dart';
+import 'package:matrimonial/services/api_service.dart';
 import 'screens/login_screen.dart';
 
-void main() {
-  runApp(const MyApp());
-}
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  // Initialize ApiService
+  final apiService = Get.put(ApiService());
+  await apiService.init(persistCookies: true);
 
-  @override
-  Widget build(BuildContext context) {
-    return GetMaterialApp(
+  // Check if cookies exist (user logged in)
+  final cookies = await apiService.cookieJar?.loadForRequest(
+    Uri.parse('https://test.maheshwari.org'),
+  );
+
+  final bool isLoggedIn = cookies != null && cookies.isNotEmpty;
+
+  Get.put(AuthController());
+
+  runApp(
+    GetMaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Maheshwari Matrimonial',
       theme: ThemeData(primarySwatch: Colors.red),
-      home: LoginScreen(),
-    );
-  }
+      home: isLoggedIn ? const SearchScreen() : const LoginScreen(),
+    ),
+  );
 }
