@@ -5,7 +5,6 @@ import 'package:dio/dio.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:matrimonial/controllers/searchController.dart';
 import 'package:matrimonial/screens/search_view.dart';
 import 'package:matrimonial/services/api_service.dart';
 
@@ -25,6 +24,13 @@ class AuthController extends GetxController {
     dio.interceptors.add(CookieManager(cookieJar));
     super.onInit();
   }
+
+  void clearFields() {
+  profileIdController.clear();
+  passwordController.clear();
+  selectedRelation.value = '';
+  rememberMe.value = false;
+}
 
   bool validateFields() {
     if (profileIdController.text.trim().isEmpty) {
