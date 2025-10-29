@@ -12,7 +12,6 @@ class ApiService {
 
   ApiService();
 
-  /// Initialize Dio with CookieJar (persistent or in-memory)
   Future<void> init({required bool persistCookies}) async {
     cookieJar = await CookieHelper.createCookieJar(persist: persistCookies);
 
