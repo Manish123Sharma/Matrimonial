@@ -1,23 +1,38 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:matrimonial/screens/login_screen.dart';
-import '../controllers/searchController.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../blocs/search_bloc/search_bloc.dart';
+import '../blocs/search_bloc/search_event.dart';
+import '../blocs/search_bloc/search_state.dart';
+import '../blocs/auth_bloc/auth_bloc.dart';
+import '../blocs/auth_bloc/auth_event.dart';
 import '../services/api_service.dart';
-import '../controllers/authController.dart';
+import 'login_screen.dart';
 
-class SearchScreen extends StatelessWidget {
+class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
 
   @override
+  State<SearchScreen> createState() => _SearchScreenState();
+}
+
+class _SearchScreenState extends State<SearchScreen> {
+  late SearchBloc _searchBloc;
+  late AuthBloc _authBloc;
+
+  @override
+  void initState() {
+    super.initState();
+    // If provided from parent via BlocProvider, retrieve it; otherwise create
+    _searchBloc = context.read<SearchBloc>();
+    _authBloc = context.read<AuthBloc>();
+
+    // Example: fire two searches (like original)
+    _searchBloc.add(SearchRequested(searchResultType: 2, searchValue: "1"));
+    _searchBloc.add(SearchRequested(searchResultType: 2, searchValue: "4"));
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final controller = Get.put(SearchUserController());
-    final apiService = Get.find<ApiService>();
-    final authController = Get.find<AuthController>();
-
-    // Fetch results (example static values)
-    controller.fetchSearchResults(searchResultType: 2, searchValue: "1");
-    controller.fetchSearchResults(searchResultType: 2, searchValue: "4");
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Search Results'),
@@ -26,106 +41,91 @@ class SearchScreen extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
-              final confirm = await Get.defaultDialog<bool>(
-                title: "Logout",
-                middleText: "Are you sure you want to logout?",
-                textCancel: "Cancel",
-                textConfirm: "Logout",
-                confirmTextColor: Colors.white,
-                onConfirm: () {
-                  Get.back(result: true);
-                },
-                onCancel: () => Get.back(result: false),
+              final confirmed = await showDialog<bool>(
+                context: context,
+                builder: (c) => AlertDialog(
+                  title: const Text('Logout'),
+                  content: const Text('Are you sure you want to logout?'),
+                  actions: [
+                    TextButton(onPressed: () => Navigator.of(c).pop(false), child: const Text('Cancel')),
+                    TextButton(onPressed: () => Navigator.of(c).pop(true), child: const Text('Logout')),
+                  ],
+                ),
               );
 
-              if (confirm == true) {
-                // Clear cookies
-                final apiService = Get.find<ApiService>();
-                await apiService.clearCookies(persist: false);
+              if (confirmed == true) {
+                // Clear cookies and reset auth
+                await _authBloc.apiService.clearCookies(persist: false);
+                _authBloc.add(LogoutRequested());
 
-                // Clear login fields
-                final authController = Get.find<AuthController>();
-                authController.clearFields();
-
-                // Navigate to login screen
-                Get.offAll(() => const LoginScreen());
+                // Navigate to LoginScreen (clear stack)
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  (route) => false,
+                );
               }
             },
           ),
         ],
       ),
-      body: Obx(() {
-        if (controller.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
-        }
+      body: BlocBuilder<SearchBloc, SearchState>(
+        builder: (context, state) {
+          if (state is SearchLoading) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (state is SearchFailure) {
+            return Center(child: Text(state.message));
+          } else if (state is SearchLoaded) {
+            final results = state.results;
+            if (results.isEmpty) {
+              return const Center(child: Text('No profiles found.'));
+            }
 
-        if (controller.errorMessage.isNotEmpty) {
-          return Center(child: Text(controller.errorMessage.value));
-        }
-
-        final results = controller.results;
-
-        if (results.isEmpty) {
-          return const Center(child: Text('No profiles found.'));
-        }
-
-        return ListView.builder(
-          itemCount: results.length,
-          padding: const EdgeInsets.all(10),
-          itemBuilder: (context, index) {
-            final item = results[index];
-
-            return Card(
-              margin: const EdgeInsets.symmetric(vertical: 8),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              elevation: 3,
-              child: ListTile(
-                contentPadding: const EdgeInsets.all(12),
-                leading: CircleAvatar(
-                  backgroundImage: NetworkImage(
-                    item['DefaultPhoto'] ??
-                        'https://cdn.rdgroup.in/t/img/user/Female.gif',
-                  ),
-                  radius: 28,
-                ),
-                title: Text(
-                  item['Name'] ?? 'Unknown',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Age: ${item['Age'] ?? '-'}'),
-                    Text('Gotra: ${item['Gotra'] ?? '-'}'),
-                    Text('Education: ${item['Education'] ?? '-'}'),
-                    Text('Income: ${item['IncomeCategory'] ?? '-'}'),
-                  ],
-                ),
-                trailing: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'ID: ${item['ProfileId']}',
-                      style: const TextStyle(fontSize: 12),
+            return ListView.builder(
+              itemCount: results.length,
+              padding: const EdgeInsets.all(10),
+              itemBuilder: (context, index) {
+                final item = results[index];
+                return Card(
+                  margin: const EdgeInsets.symmetric(vertical: 8),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 3,
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.all(12),
+                    leading: CircleAvatar(
+                      backgroundImage: NetworkImage(
+                        item['DefaultPhoto'] ?? 'https://cdn.rdgroup.in/t/img/user/Female.gif',
+                      ),
+                      radius: 28,
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      item['LastActive'] ?? '',
-                      style: const TextStyle(fontSize: 12),
+                    title: Text(item['Name'] ?? 'Unknown', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Age: ${item['Age'] ?? '-'}'),
+                        Text('Gotra: ${item['Gotra'] ?? '-'}'),
+                        Text('Education: ${item['Education'] ?? '-'}'),
+                        Text('Income: ${item['IncomeCategory'] ?? '-'}'),
+                      ],
                     ),
-                  ],
-                ),
-              ),
+                    trailing: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text('ID: ${item['ProfileId']}', style: const TextStyle(fontSize: 12)),
+                        const SizedBox(height: 4),
+                        Text(item['LastActive'] ?? '', style: const TextStyle(fontSize: 12)),
+                      ],
+                    ),
+                  ),
+                );
+              },
             );
-          },
-        );
-      }),
+          } else {
+            return const Center(child: Text('Start searching.'));
+          }
+        },
+      ),
     );
   }
 }
