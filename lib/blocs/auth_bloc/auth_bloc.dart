@@ -32,7 +32,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
         final data = response.data;
         if (data != null && data['Authenticated'] == true) {
-          // Save cookies returned by server into cookieJar used by ApiService
           final cookies = response.headers.map['set-cookie'];
           if (cookies != null) {
             final uri = Uri.parse(ApiService.baseUri);
@@ -40,7 +39,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
             await _cookieJar.saveFromResponse(uri, cookieList);
           }
 
-          // initialize apiService with persist option so its cookieJar matches saved cookies
           await apiService.init(persistCookies: event.rememberMe);
 
           emit(AuthSuccess());
