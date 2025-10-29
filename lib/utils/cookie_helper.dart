@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:cookie_jar/cookie_jar.dart';
 
-
 class CookieHelper {
   static Future<CookieJar> createCookieJar({required bool persist}) async {
     if (!persist) return CookieJar();
