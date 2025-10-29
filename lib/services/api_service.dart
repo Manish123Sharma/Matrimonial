@@ -2,10 +2,11 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:cookie_jar/cookie_jar.dart';
-import '../core/constants.dart';
+import '../constants/constants.dart';
 import '../utils/cookie_helper.dart';
 
 class ApiService {
+  static const String baseUri = ApiConstants.baseUrl;
   late Dio dio;
   CookieJar? cookieJar;
 
@@ -27,12 +28,11 @@ class ApiService {
       ..interceptors.add(LogInterceptor(
         requestBody: true,
         responseBody: true,
-        logPrint: (obj) => print(obj), // Simple debug logger
+        logPrint: (obj) => print(obj),
       ));
   }
 
-  /// LOGIN GET request as required.
-  /// Returns Dio Response on success or throws Exception on error.
+  /// LOGIN GET request
   Future<Response> login({
     required String profileId,
     required String password,
@@ -58,7 +58,7 @@ class ApiService {
     }
   }
 
-  /// SEARCH POST request (requires existing cookieJar)
+  /// SEARCH POST request (requires cookieJar initialised)
   Future<Response> search({
     required int searchResultType,
     required String searchValue,
