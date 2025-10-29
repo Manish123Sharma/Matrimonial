@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../blocs/auth_bloc/auth_bloc.dart';
 import '../blocs/auth_bloc/auth_event.dart';
 import '../blocs/auth_bloc/auth_state.dart';
-import '../blocs/search_bloc/search_bloc.dart';
-import '../services/api_service.dart';
-import 'search_view.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -27,7 +25,7 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  // ✅ Field validation
+  // Field validation
   bool validateFields() {
     if (profileIdController.text.trim().isEmpty) {
       showError("Please enter Profile ID");
@@ -44,7 +42,7 @@ class _LoginScreenState extends State<LoginScreen> {
     return true;
   }
 
-  // ✅ Red snackbar for error/validation
+  // Red snackbar for error/validation
   void showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -61,7 +59,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // ✅ Green snackbar for success
+  //  Green snackbar for success
   void showSuccess(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -89,17 +87,10 @@ class _LoginScreenState extends State<LoginScreen> {
           if (state is AuthSuccess) {
             showSuccess('Login Successful! Welcome.');
 
-            // ✅ Navigate to SearchScreen with SearchBloc + same ApiService
-            final apiService = authBloc.apiService;
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (_) => BlocProvider(
-                  create: (_) => SearchBloc(apiService: apiService),
-                  child: const SearchScreen(),
-                ),
-              ),
-            );
+            //  Navigate using GoRouter
+            Future.delayed(const Duration(milliseconds: 300), () {
+              context.go('/search');
+            });
           } else if (state is AuthFailure) {
             showError(state.message);
           }
