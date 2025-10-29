@@ -7,11 +7,11 @@ A modern matrimonial application built in **Flutter** that helps users find suit
 ## Tech Stack
 
 - **Frontend:** Flutter
-- **State Management:** GetX
+- **State Management:** BLoC (Business Logic Component)
 - **Backend Integration:** REST APIs
 - **Local Storage & Persistence:** SharedPreferences / CookieJar
 - **Networking:** Dio
-- **Other Libraries:** dio_cookie_manager, get, fluttertoast
+- **Other Libraries:** flutter_bloc, dio_cookie_manager, fluttertoast
 
 ---
 
@@ -53,17 +53,38 @@ A modern matrimonial application built in **Flutter** that helps users find suit
 
 ---
 
-## State Management & API Handling
+## 🧩 State Management (BLoC)
 
-- **State Management:** The app uses GetX for state management. Controllers are responsible for managing the state of different screens (e.g., `AuthController` for authentication, `SearchController` for search results).  
-- **Reactive UI Updates:** UI components are updated reactively using `Obx` widgets, listening to changes in controller variables.  
-- **API Handling:**  
-  - **HTTP Requests:** Dio is used for making HTTP requests.  
-  - **Session Management:** Cookies are managed using `dio_cookie_manager` for persistent sessions.  
-  - **Response Handling:** API responses are parsed and stored in models.  
-  - **Error Handling:** Toast messages are shown for failed requests or invalid inputs.  
-- **Local Persistence:** Session cookies are saved locally to prevent the user from having to log in repeatedly.
+The app follows the BLoC (Business Logic Component) pattern for predictable and maintainable state management.
 
+- **Implementation Highlights**  
+- **Events & States:** Each BLoC defines clear Event and State classes for handling user actions and system updates.  
+- **Blocs:**  
+  - AuthBloc handles authentication, login, logout, and cookie persistence.  
+  - SearchBloc manages search queries, loading states, and API responses.
+- **UI Integration:** The app uses BlocBuilder and BlocListener to reactively rebuild UI components based on state changes.
+- **Navigation:** Replaces GetX navigation with Flutter’s native Navigator and MaterialPageRoute.
+- **Error & Loading Handling:** Loading states are handled with CircularProgressIndicator, and errors are displayed with SnackBar.
+
+---
+
+## 🔗 API Handling
+
+- **HTTP Requests:** Managed using Dio for reliable and structured API calls.
+- **Session Management:** Cookies stored using dio_cookie_manager for persistent sessions.
+- **Response Handling:** API responses parsed and displayed via the respective BLoCs.
+- **Error Handling:** Toast or Snackbar messages show for any network or validation issues.
+
+---
+
+## 💾 Local Persistence
+
+Session cookies and preferences are saved locally using:
+
+- SharedPreferences
+- CookieJar
+
+This ensures users remain logged in unless explicitly logged out.
 
 ---
 
