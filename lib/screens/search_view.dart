@@ -7,6 +7,7 @@ import '../blocs/auth_bloc/auth_bloc.dart';
 import '../blocs/auth_bloc/auth_event.dart';
 import '../services/api_service.dart';
 import 'login_screen.dart';
+import 'package:go_router/go_router.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -22,11 +23,11 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   void initState() {
     super.initState();
-    // If provided from parent via BlocProvider, retrieve it; otherwise create
+
     _searchBloc = context.read<SearchBloc>();
     _authBloc = context.read<AuthBloc>();
 
-    // Example: fire two searches (like original)
+
     _searchBloc.add(SearchRequested(searchResultType: 2, searchValue: "1"));
     _searchBloc.add(SearchRequested(searchResultType: 2, searchValue: "4"));
   }
@@ -47,23 +48,24 @@ class _SearchScreenState extends State<SearchScreen> {
                   title: const Text('Logout'),
                   content: const Text('Are you sure you want to logout?'),
                   actions: [
-                    TextButton(onPressed: () => Navigator.of(c).pop(false), child: const Text('Cancel')),
-                    TextButton(onPressed: () => Navigator.of(c).pop(true), child: const Text('Logout')),
+                    TextButton(
+                      onPressed: () => Navigator.of(c).pop(false),
+                      child: const Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.of(c).pop(true),
+                      child: const Text('Logout'),
+                    ),
                   ],
                 ),
               );
 
               if (confirmed == true) {
-                // Clear cookies and reset auth
                 await _authBloc.apiService.clearCookies(persist: false);
                 _authBloc.add(LogoutRequested());
-
-                // Navigate to LoginScreen (clear stack)
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (_) => const LoginScreen()),
-                  (route) => false,
-                );
+                Future.delayed(const Duration(milliseconds: 100), () {
+                  context.go('/');
+                });
               }
             },
           ),
@@ -88,17 +90,26 @@ class _SearchScreenState extends State<SearchScreen> {
                 final item = results[index];
                 return Card(
                   margin: const EdgeInsets.symmetric(vertical: 8),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   elevation: 3,
                   child: ListTile(
                     contentPadding: const EdgeInsets.all(12),
                     leading: CircleAvatar(
                       backgroundImage: NetworkImage(
-                        item['DefaultPhoto'] ?? 'https://cdn.rdgroup.in/t/img/user/Female.gif',
+                        item['DefaultPhoto'] ??
+                            'https://cdn.rdgroup.in/t/img/user/Female.gif',
                       ),
                       radius: 28,
                     ),
-                    title: Text(item['Name'] ?? 'Unknown', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    title: Text(
+                      item['Name'] ?? 'Unknown',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -112,9 +123,15 @@ class _SearchScreenState extends State<SearchScreen> {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text('ID: ${item['ProfileId']}', style: const TextStyle(fontSize: 12)),
+                        Text(
+                          'ID: ${item['ProfileId']}',
+                          style: const TextStyle(fontSize: 12),
+                        ),
                         const SizedBox(height: 4),
-                        Text(item['LastActive'] ?? '', style: const TextStyle(fontSize: 12)),
+                        Text(
+                          item['LastActive'] ?? '',
+                          style: const TextStyle(fontSize: 12),
+                        ),
                       ],
                     ),
                   ),
