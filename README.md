@@ -4,25 +4,28 @@ A modern matrimonial application built in **Flutter** that helps users find suit
 
 ---
 
-## Tech Stack
+## 🧰 Tech Stack
 
-- **Frontend:** Flutter
-- **State Management:** BLoC (Business Logic Component)
-- **Backend Integration:** REST APIs
-- **Local Storage & Persistence:** SharedPreferences / CookieJar
-- **Networking:** Dio
-- **Other Libraries:** flutter_bloc, dio_cookie_manager, fluttertoast
+| Category | Technology |
+|-----------|-------------|
+| **Frontend** | Flutter |
+| **State Management** | BLoC (Business Logic Component) |
+| **Navigation** | GoRouter |
+| **Networking** | Dio |
+| **Persistence** | SharedPreferences, CookieJar |
+| **Utilities** | dio_cookie_manager, fluttertoast, flutter_bloc |
 
 ---
 
-## Key Features
+## 🚀 Key Features
 
-- **User Authentication:** Login and signup with API-based authentication.  
-- **Profile Management:** View and edit user profiles.  
-- **Search Functionality:** Search and filter profiles using API calls.  
-- **Persistent Login:** Cookies and local storage to maintain session.  
-- **Smooth UI:** Responsive and interactive UI using Flutter widgets.  
-- **Error Handling:** Graceful handling of API errors and invalid inputs.  
+- 🔐 **User Authentication:** Secure login using API-based authentication.  
+- 👤 **Profile Management:** View and manage user profiles.  
+- 🔎 **Search Functionality:** Search and filter profiles using API integration.  
+- 💾 **Persistent Login:** Session maintained with cookies & local storage.  
+- 🧭 **GoRouter Navigation:** Clean and declarative routing across screens.  
+- ⚡ **Responsive UI:** Smooth, consistent, and adaptive design.  
+- 🧩 **Error Handling:** Graceful management of API/network errors.
 
 ---
 
@@ -55,16 +58,17 @@ A modern matrimonial application built in **Flutter** that helps users find suit
 
 ## 🧩 State Management (BLoC)
 
-The app follows the BLoC (Business Logic Component) pattern for predictable and maintainable state management.
+The app uses **BLoC (Business Logic Component)** for clean, testable, and predictable state management.
 
-- **Implementation Highlights**  
-- **Events & States:** Each BLoC defines clear Event and State classes for handling user actions and system updates.  
-- **Blocs:**  
-  - AuthBloc handles authentication, login, logout, and cookie persistence.  
-  - SearchBloc manages search queries, loading states, and API responses.
-- **UI Integration:** The app uses BlocBuilder and BlocListener to reactively rebuild UI components based on state changes.
-- **Navigation:** Replaces GetX navigation with Flutter’s native Navigator and MaterialPageRoute.
-- **Error & Loading Handling:** Loading states are handled with CircularProgressIndicator, and errors are displayed with SnackBar.
+### 🔹 Highlights
+- Each module (Auth, Search, etc.) has its own Event and State classes.
+- Clear separation of **UI** and **business logic**.
+- Real-time UI updates using **BlocBuilder** and **BlocListener**.
+- Integration with **GoRouter** for reactive navigation.
+
+### 🔹 Implemented Blocs
+- **AuthBloc** → Handles login, logout, and cookie/session persistence.  
+- **SearchBloc** → Manages search requests, loading states, and API responses.
 
 ---
 
@@ -79,12 +83,35 @@ The app follows the BLoC (Business Logic Component) pattern for predictable and 
 
 ## 💾 Local Persistence
 
-Session cookies and preferences are saved locally using:
+To keep users logged in until logout:
 
-- SharedPreferences
-- CookieJar
+- **SharedPreferences** stores lightweight user preferences.  
+- **CookieJar** manages authenticated sessions and cookies.  
 
-This ensures users remain logged in unless explicitly logged out.
+This ensures a smooth experience — no repeated logins unless explicitly logged out.
+
+---
+
+## 📡 API Endpoints
+
+| Feature                | Endpoint                        | Method     |
+| ---------------------- | ------------------------------- | ---------- |
+| **Login**              | `/api/login`                    | POST       |
+| **Search**             | `/api/search/get-search-result` | POST       |
+| **Profile Management** | `/api/profile/...`              | GET / POST |
+| **Cookies**            | Managed via dio_cookie_manager  | —          |
+
+All requests are authenticated with session cookies obtained during login.
+
+---
+
+## 🧭 Navigation — GoRouter
+
+The app now uses GoRouter for declarative navigation:
+
+- Clean routes (/login, /search, /profile)
+- Automatic redirection after login/logout
+- Seamless integration with BLoC for reactive navigation
 
 ---
 
